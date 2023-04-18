@@ -1,0 +1,18 @@
+SIZE   ?= full
+TARGET ?= waveshare-rp2040-zero
+FILE = pwm-ws2812_$(TARGET)_$(VERSION).uf2
+
+VERSION := $(shell git describe --tags --always)
+LD_FLAGS := -ldflags="-X 'main.Version=$(VERSION)'" # https://www.digitalocean.com/community/tutorials/using-ldflags-to-set-version-information-for-go-applications
+
+.PHONY: clean build flash
+
+clean:
+	@rm -rf build
+
+build:
+	@mkdir -p build
+	tinygo build $(LD_FLAGS) -target=$(TARGET) -size=$(SIZE) -opt=z -print-allocs=main -o ./build/$(FILE) ./src
+
+flash:
+	tinygo flash $(LD_FLAGS) -target=$(TARGET) -size=$(SIZE) -opt=z -print-allocs=main ./src

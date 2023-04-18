@@ -1,0 +1,83 @@
+name: Upload release artifacts
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  upload:
+    runs-on: ubuntu-latest
+    container:
+      image: tinygo/tinygo:0.27.0
+      options: --user root
+    steps:
+
+    - name: Prepare
+      run: |
+        apt-get update
+        apt-get install -y make
+
+    - name: Work around CVE-2022-24765
+      # We're not on a multi-user machine, so this is safe.
+      run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
+
+    - name: Checkout
+      uses: actions/checkout@v3
+      with:
+        fetch-depth: 0
+
+    - name: Dependencies
+      run: |
+        go mod tidy
+
+    # Build
+
+    - name: Build Pico binary
+      run: make TARGET=pico build
+
+    - name: Build Xiao RP2040 binary
+      run: make TARGET=xiao-rp2040 build
+
+    - name: Build Nano RP2040 binary
+      run: make TARGET=nano-rp2040 build
+
+    - name: Build Waveshare RP2040 Zero binary
+      run: make TARGET=waveshare-rp2040-zero build
+
+    # Upload
+
+    - name: Upload Pico binary to release
+      uses: svenstaro/upload-release-action@v2
+      with:
+        tag: ${{ github.ref }}
+        file: ./build/pwm-ws2812_pico_*.uf2
+        file_glob: true
+        asset_name: "pwm-ws2812_pico_$tag.uf2"
+        repo_token: ${{ github.token }}
+
+    - name: Upload Xiao RP2040 binary to release
+      uses: svenstaro/upload-release-action@v2
+      with:
+        tag: ${{ github.ref }}
+        file: ./build/pwm-ws2812_xiao-rp2040_*.uf2
+        file_glob: true
+        asset_name: "pwm-ws2812_xiao-rp2040_$tag.uf2"
+        repo_token: ${{ github.token }}
+
+    - name: Upload Nano RP2040 binary to release
+      uses: svenstaro/upload-release-action@v2
+      with:
+        tag: ${{ github.ref }}
+        file: ./build/pwm-ws2812_nano-rp2040_*.uf2
+        file_glob: true
+        asset_name: "pwm-ws2812_nano-rp2040_$tag.uf2"
+        repo_token: ${{ github.token }}
+
+    - name: Upload Waveshare RP2040 Zero binary to release
+      uses: svenstaro/upload-release-action@v2
+      with:
+        tag: ${{ github.ref }}
+        file: ./build/pwm-ws2812_waveshare-rp2040-zero_*.uf2
+        file_glob: true
+        asset_name: "pwm-ws2812_waveshare-rp2040-zero_$tag.uf2"
+        repo_token: ${{ github.token }}
